@@ -1,16 +1,16 @@
-import { promises as fs } from "fs";
+import fs from "fs/promises";
 import path from "path";
 
 import { nanoid } from "nanoid";
 
-const contactsPath = path.join(__dirname, "contacts.json");
+const contactsPath = path.join('db', 'contacts.json');
 
 async function listContacts() {
   try {
     const data = await fs.readFile(contactsPath);
     return JSON.parse(data);
   } catch (error) {
-    throw new Error();
+    throw error;
   }
 }
 
@@ -19,7 +19,7 @@ async function getContactById(contactId) {
     const contacts = await listContacts();
     return contacts.find((contact) => contact.id === contactId || null);
   } catch (error) {
-    throw new Error();
+    throw error;
   }
 }
 
@@ -27,12 +27,13 @@ async function removeContact(contactId) {
   try {
     const contacts = await listContacts();
     const removeContacts = contacts.filter(
-      (contact) => contact.id === contactId || null
+      (contact) => contact.id !== contactId
     );
     await fs.writeFile(contactsPath, JSON.stringify(removeContacts, null, 2));
-    return getContactById(contactId);
+    const removedContact = contacts.find(contact => contact.id === contactId);
+    return removedContact || null;
   } catch (error) {
-    throw new Error();
+    throw error;
   }
 }
 
@@ -44,7 +45,7 @@ async function addContact(name, email, phone) {
     await fs.writeFile(contactsPath, JSON.stringify(updatedContacts, null, 2));
     return newContact;
   } catch (error) {
-    throw new Error();
+    throw error;
   }
 }
 
