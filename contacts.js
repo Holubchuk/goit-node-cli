@@ -3,50 +3,39 @@ import path from "path";
 
 import { nanoid } from "nanoid";
 
-const contactsPath = path.join('db', 'contacts.json');
+const contactsPath = path.resolve("db", "contacts.json");
+
+const updateContacts = (contacts) =>
+  fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 
 async function listContacts() {
-  try {
-    const data = await fs.readFile(contactsPath);
-    return JSON.parse(data);
-  } catch (error) {
-    throw error;
-  }
+  const data = await fs.readFile(contactsPath);
+  return JSON.parse(data);
 }
 
 async function getContactById(contactId) {
-  try {
-    const contacts = await listContacts();
-    return contacts.find((contact) => contact.id === contactId || null);
-  } catch (error) {
-    throw error;
-  }
+  const contacts = await listContacts();
+  const result = contacts.find((contact) => contact.id === contactId);
+  return result || null;
 }
 
 async function removeContact(contactId) {
-  try {
-    const contacts = await listContacts();
-    const removeContacts = contacts.filter(
-      (contact) => contact.id !== contactId
-    );
-    await fs.writeFile(contactsPath, JSON.stringify(removeContacts, null, 2));
-    const removedContact = contacts.find(contact => contact.id === contactId);
-    return removedContact || null;
-  } catch (error) {
-    throw error;
+  const contacts = await listContacts();
+  const index = contacts.findIndex((contact) => contact.id === contactId);
+  if (index === -1) {
+    return null;
   }
+  const [result] = contacts.splice(index, 1);
+  await updateContacts(contacts);
+  return result;
 }
 
-async function addContact(name, email, phone) {
-  try {
-    const contacts = await listContacts();
-    const newContact = { id: nanoid(), name, email, phone };
-    const updatedContacts = [...contacts, newContact];
-    await fs.writeFile(contactsPath, JSON.stringify(updatedContacts, null, 2));
-    return newContact;
-  } catch (error) {
-    throw error;
-  }
+async function addContact(data) {
+  const contacts = await listContacts();
+  const newContact = { id: nanoid(), ...data };
+  const updatedContacts = [...contacts, newContact];
+  await updateContacts(updatedContacts);
+  return newContact;
 }
 
-export {listContacts, getContactById, removeContact, addContact};
+export { listContacts, getContactById, removeContact, addContact };
